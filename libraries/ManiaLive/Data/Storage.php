@@ -196,7 +196,6 @@ class Storage extends \ManiaLib\Utils\Singleton implements ServerListener, AppLi
 	} else {
 	    $this->players[$login] = $playerInfos;
 	}
-	return $playerInfos;
     }
 
     function onPlayerDisconnect($login, $disconnectionReason) {
@@ -453,13 +452,32 @@ class Storage extends \ManiaLib\Utils\Singleton implements ServerListener, AppLi
     }
 
     function onPlayerInfoChanged($playerInfo) {
-	$formerPlayerObject = $this->getPlayerObject($playerInfo['Login']);
-	if (!$formerPlayerObject) {
-	    $player = Player::fromArray($playerInfo);
+	$player = $this->getPlayerObject($playerInfo['Login']);
+	if (!$player) {
 	    return;
 	}
 
-	$player = Player::fromArray($playerInfo);
+	$formerPlayerObject = clone $player;
+	foreach ($playerInfo as $key => $value) {
+	    $property = lcfirst($key);
+	    $player->$property = $value;
+	}
+	//Detail flags
+	$player->forceSpectator = $player->flags % 10; // 0, 1 or 2
+	$player->isReferee = (bool) (intval($player->flags / 10) % 10);
+	$player->isPodiumReady = (bool) (intval($player->flags / 100) % 10);
+	$player->isUsingStereoscopy = (bool) (intval($player->flags / 1000) % 10);
+	$player->isManagedByAnOtherServer = (bool) (intval($player->flags / 10000) % 10);
+	$player->isServer = (bool) (intval($player->flags / 100000) % 10);
+	$player->hasPlayerSlot = (bool) (intval($player->flags / 1000000) % 10);
+	$player->isBroadcasting = (bool) (intval($player->flags / 10000000) % 10);
+	$player->hasJoinedGame = (bool) (intval($player->flags / 100000000) % 10);
+	//Details spectatorStatus
+	$player->spectator = (bool) ($player->spectatorStatus % 10);
+	$player->temporarySpectator = (bool) (intval($player->spectatorStatus / 10) % 10);
+	$player->pureSpectator = (bool) (intval($player->spectatorStatus / 100) % 10);
+	$player->autoTarget = (bool) (intval($player->spectatorStatus / 1000) % 10);
+	$player->currentTargetId = intval($player->spectatorStatus / 10000);
 
 	if ($formerPlayerObject->spectator && !$player->spectator) {
 	    unset($this->spectators[$player->login]);
