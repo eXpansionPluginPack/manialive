@@ -517,7 +517,8 @@ final class GuiHandler extends \ManiaLib\Utils\Singleton implements AppListener,
 
 		Window::Erase($login);
 		CustomUI::Erase($login);
-
+		Shortkey::Erase($login);
+		
 		if(array_key_exists($login, $this->modals))
 		{
 			foreach($this->modals[$login] as $dialog)
